@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  aap:
+    user: root
+    build: ./docker-file
+    container_name: aapanel
+    # hostname: aapanel.local
+    ports: 
+      - ${AAP_PORT}:${AAP_PORT}
+      - ${FTP_PORT}:21
+      - ${SSH_PORT}:22
+      - ${HTTPS_PORT}:443
+      - ${HTTP_PORT}:80
+      - ${PMA_PORT}:888
+    volumes:
+      - ./vol/www/wwwroot:/www/wwwroot
+      - ./vol/www/server/data:/www/server/data
+      - ./vol/www/server/panel/vhost:/www/server/panel/vhost
+      - ./vol/www/server/panel/data:/www/server/panel/data
+      - ./vol/www/wwwlogs:/www/wwwlogs
+      - ./vol/www/backup:/www/backup
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./vol/www/server/nodejs:/www/server/nodejs
+      - ./vol/provision/entrypoint:/provision/entrypoint
+      - ./vol/etc/resolv.conf:/etc/resolv.conf
+      - ./vol/etc/hosts:/etc/hosts
+      - ./docker-file/provision/wp-cli.phar:/usr/bin/wp
+    env_file:
+      - ./.env
+    entrypoint: sh /provision/entrypoint/dev.sh
+    # entrypoint: sh /provision/entrypoint/prod.sh
+    sysctls:
+      net.ipv6.conf.all.disable_ipv6: 1
+    ulimits:
+      nofile:
+        soft: 1024
+        hard: 1048576
+  wt:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 1800
+    
