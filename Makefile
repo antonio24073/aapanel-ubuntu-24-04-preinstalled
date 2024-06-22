@@ -11,39 +11,44 @@ build_no_cache:
 	- docker build --no-cache -t ${REPO} ./docker-file
 
 commit:
-	- docker commit ${STACK} ${REPO_PUBL};
+	- docker commit ${STACK} ${REPO};
 
-push:    
+login:
 	- echo ${DOCKERHUB_PASS} | docker login -u ${DOCKERHUB_USER} --password-stdin
+
+push:
 	- docker push ${REPO}
 
+pull:
+	- docker pull ${REPO};
+
 mkdir:
-	- sudo mkdir -p ./vol/www/wwwroot
-	- sudo mkdir -p ./vol/www/server/data
-	- sudo mkdir -p ./vol/www/server/panel/vhost
-	- sudo mkdir -p ./vol/www/server/panel/data
-	- sudo mkdir -p ./vol/www/wwwlogs
-	- sudo mkdir -p ./vol/www/backup
-	- sudo mkdir -p ./vol/etc
+	- mkdir -p ./vol/www/wwwroot
+	- mkdir -p ./vol/www/server/data
+	- mkdir -p ./vol/www/server/panel/vhost
+	- mkdir -p ./vol/www/server/panel/data
+	- mkdir -p ./vol/www/wwwlogs
+	- mkdir -p ./vol/www/backup
+	- mkdir -p ./vol/etc
 	- make --no-print-directory run
-	- sudo docker cp ${STACK}:/www/wwwroot ./vol/www
-	- sudo docker cp ${STACK}:/www/server/data ./vol/www/server
+	- docker cp ${STACK}:/www/wwwroot ./vol/www
+	- docker cp ${STACK}:/www/server/data ./vol/www/server
 	- sudo docker cp ${STACK}:/www/server/panel/vhost ./vol/www/server/panel
 	- sudo docker cp ${STACK}:/www/server/panel/data ./vol/www/server/panel
-	- sudo docker cp ${STACK}:/www/wwwlogs ./vol/www/wwwlogs
-	- sudo docker cp ${STACK}:/www/backup ./vol/www/backup
-	- sudo docker cp ${STACK}:/etc/hosts ./vol/etc/hosts
-	- sudo docker cp ${STACK}:/etc/resolv.conf ./vol/etc/resolv.conf
-	- sudo cp -r ./docker-file/provision ./vol
-	- make --no-print-directory fix_permissions_dev
+	- docker cp ${STACK}:/www/wwwlogs ./vol/www
+	- docker cp ${STACK}:/www/backup ./vol/www
+	- docker cp ${STACK}:/etc/hosts ./vol/etc/hosts
+	- docker cp ${STACK}:/etc/resolv.conf ./vol/etc/resolv.conf
+	- cp -r ./docker-file/provision ./vol
 	- docker rm ${STACK} -f
 
-fix_permissions_prod:
-	- sudo chown 1001:1002 -R ./vol
-
-fix_permissions_dev:
-	- sudo chown $$USER:1002 -R ./vol
-	- sudo chmod 775 -R ./vol
+perm:
+	- docker exec -u 0 -it ${STACK} chown -R mysql:mysql /www/server/data
+	- docker exec -u 0 -it ${STACK} chown root:root -R /www/server/panel/vhost
+	- docker exec -u 0 -it ${STACK} chown root:root -R /www/server/panel/data
+	- docker exec -u 0 -it ${STACK} chown ${AAP_USER}:www /www/wwwroot
+	- docker exec -u 0 -it ${STACK} find /www/wwwroot -type d -exec chmod 775 {} \; 
+	- docker exec -u 0 -it ${STACK} find /www/wwwroot -type f -exec chmod 664 {} \; 
 
 rmdir:
 	- sudo rm -Rf ./vol/
@@ -58,3 +63,9 @@ up:
 
 rm:
 	- docker rm ${STACK} -f
+
+bt:
+	- docker exec -it ${STACK} bt;
+
+bash:
+	- docker exec -it ${STACK} bash;

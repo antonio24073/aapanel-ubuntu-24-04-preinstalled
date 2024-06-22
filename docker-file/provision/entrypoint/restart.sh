@@ -2,6 +2,8 @@
 
 #ini restart aapanel
 bt 1
+
+chown mysql:mysql /www/server/data
 /www/server/mysql/scripts/mysql_install_db --user=mysql
 /etc/init.d/mysqld start
 /etc/init.d/php-fpm-74 start
@@ -14,5 +16,6 @@ bt 1
 /etc/init.d/nginx restart
 /usr/local/lsws/bin/lswsctrl restart
 /etc/init.d/httpd restart
+/etc/init.d/httpd start
 /etc/init.d/memcached restart
 #end restart aapanel
